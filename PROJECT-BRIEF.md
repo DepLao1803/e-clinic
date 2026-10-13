@@ -51,8 +51,8 @@ Phòng khám hiện quản lý lịch khám bằng cách bệnh nhân gọi đi�
 | Gửi email | SMTP (Mailpit khi dev) | Tiêu chuẩn chung, dễ đổi sang nhà cung cấp thật khi lên production |
 
 ## Thành viên
-- Lưu Long Hải — 21211TT0522 — Ops owner sprint 1
-- Ngô Đức Hải — 24211TT — Dev owner sprint 1
+- Lưu Long Hải — 21211TT0522
+- Ngô Đức Hải — 24211TT2856
 
 ---
 *Duyệt ngày: ___ / ___ / 2026. Giảng viên: Nguyễn Huy Hoàng*
