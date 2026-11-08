@@ -145,5 +145,5 @@ Khi quản trị bấm **"Xuất báo cáo tháng"**, worker sinh tệp CSV rồ
 
 | Họ tên | MSSV | Vai trò sprint 1 |
 |---|---|---|
-| Nguyễn Văn A | 21520001 | Ops owner |
-| Trần Thị B | 21520002 | Dev owner |
+| Lưu Long Hải | 21211TT0522 |  |
+| Ngô Đức Hải | 24211TT4856 |  |
