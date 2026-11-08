@@ -1,0 +1,29 @@
+{
+  "name": "e-clinic-workspace",
+  "private": true,
+  "workspaces": [
+    "apps/*"
+  ],
+  "engines": {
+    "node": ">=20.11"
+  },
+  "scripts": {
+    "infra:up": "docker compose up -d",
+    "infra:down": "docker compose down",
+    "infra:reset": "docker compose down -v && docker compose up -d",
+    "dev": "npm run dev --workspaces --if-present",
+    "dev:api": "npm run dev -w @eclinic/api",
+    "dev:web": "npm run dev -w @eclinic/web",
+    "build": "npm run build --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present",
+    "db:migrate": "npm run prisma:migrate -w @eclinic/api",
+    "db:seed": "npm run prisma:seed -w @eclinic/api",
+    "db:studio": "npm run prisma:studio -w @eclinic/api",
+    "db:reset": "npm run prisma:reset -w @eclinic/api"
+  },
+  "devDependencies": {
+    "@types/eslint": "^9.6.1",
+    "@types/react": "^19.3.0",
+    "dotenv-cli": "^7.4.0"
+  }
+}

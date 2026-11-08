@@ -1,0 +1,312 @@
+// Maps the legacy Laravel/MySQL schema (snake_case tables & columns) to Prisma.
+// Deliberate deviations from the Laravel migrations are marked with  // DEVIATION
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                     Int       @id @default(autoincrement())
+  name                   String    @db.VarChar(255)
+  email                  String?   @unique @db.VarChar(255) // DEVIATION: nullable (phone-only registration was allowed by Laravel's service but would crash on NOT NULL)
+  emailVerifiedAt        DateTime? @map("email_verified_at")
+  password               String    @db.VarChar(255)
+  twoFactorSecret        String?   @map("two_factor_secret") @db.Text
+  twoFactorRecoveryCodes String?   @map("two_factor_recovery_codes") @db.Text
+  twoFactorConfirmedAt   DateTime? @map("two_factor_confirmed_at")
+  phone                  String?   @db.VarChar(20)
+  gender                 String?   @db.VarChar(255)
+  dateOfBirth            DateTime? @map("date_of_birth") @db.Date
+  avatarUrl              String?   @map("avatar_url") @db.VarChar(255)
+  address                String?   @db.Text
+  identityCard           String?   @unique @map("identity_card") @db.VarChar(20)
+  insuranceCode          String?   @map("insurance_code") @db.VarChar(20) // thẻ BHYT
+  status                 Int       @default(1) @db.UnsignedTinyInt // 1 active, 0 inactive
+  deletedAt              DateTime? @map("deleted_at")
+  rememberToken          String?   @map("remember_token") @db.VarChar(100)
+  createdAt              DateTime  @default(now()) @map("created_at")
+  updatedAt              DateTime  @default(now()) @updatedAt @map("updated_at")
+
+  roles        RoleUser[]
+  doctor       Doctor?
+  appointments Appointment[]
+  reviews      Review[]
+
+  @@index([phone])
+  @@map("users")
+}
+
+model PasswordResetToken {
+  email     String    @id @db.VarChar(255)
+  token     String    @db.VarChar(255)
+  createdAt DateTime? @map("created_at")
+
+  @@map("password_reset_tokens")
+}
+
+model Role {
+  id        Int        @id @default(autoincrement())
+  name      String     @unique @db.VarChar(50)
+  createdAt DateTime   @default(now()) @map("created_at")
+  updatedAt DateTime   @default(now()) @updatedAt @map("updated_at")
+  users     RoleUser[]
+
+  @@map("roles")
+}
+
+model RoleUser {
+  roleId    Int      @map("role_id")
+  userId    Int      @map("user_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+  role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, userId])
+  @@index([userId])
+  @@map("role_user")
+}
+
+model Specialty {
+  id          Int       @id @default(autoincrement())
+  name        String    @db.VarChar(255)
+  slug        String    @unique @db.VarChar(255)
+  description String?   @db.Text
+  iconUrl     String?   @map("icon_url") @db.VarChar(255)
+  isActive    Int       @default(1) @map("is_active") @db.UnsignedTinyInt
+  deletedAt   DateTime? @map("deleted_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @default(now()) @updatedAt @map("updated_at")
+
+  services MedicalService[]
+  doctors  DoctorSpecialty[]
+
+  @@index([name])
+  @@map("specialties")
+}
+
+model MedicalService {
+  id          Int       @id @default(autoincrement())
+  specialtyId Int       @map("specialty_id")
+  name        String    @unique @db.VarChar(255)
+  slug        String    @unique @db.VarChar(255)
+  price       Decimal   @db.Decimal(15, 0)
+  description String?   @db.Text
+  iconUrl     String?   @map("icon_url") @db.VarChar(255)
+  durationMinutes Int     @default(30) @map("duration_minutes")
+  isActive    Boolean   @default(true) @map("is_active")
+  deletedAt   DateTime? @map("deleted_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @default(now()) @updatedAt @map("updated_at")
+
+  specialty    Specialty                   @relation(fields: [specialtyId], references: [id], onDelete: Cascade)
+  appointments AppointmentMedicalService[]
+
+  @@index([specialtyId])
+  @@map("medical_services")
+}
+
+model Doctor {
+  id                 Int       @id @default(autoincrement())
+  userId             Int?      @unique @map("user_id") // DEVIATION: @unique so Prisma can model the hasOne (a user has at most one doctor profile)
+  nationalId         String?   @unique @map("national_id") @db.VarChar(20)
+  employeeCode       String?   @unique @map("employee_code") @db.VarChar(50)
+  practitionerNumber String?   @unique @map("practitioner_number") @db.VarChar(50)
+  title              String    @db.VarChar(100)
+  biography          String?   @db.Text
+  price              Decimal   @db.Decimal(15, 0)
+  clinicRoom         String    @map("clinic_room") @db.VarChar(50)
+  isActive           Boolean   @default(true) @map("is_active")
+  isVerified         Boolean   @default(false) @map("is_verified")
+  createdAt          DateTime  @default(now()) @map("created_at")
+  updatedAt          DateTime  @default(now()) @updatedAt @map("updated_at")
+  deletedAt          DateTime? @map("deleted_at")
+
+  user         User?             @relation(fields: [userId], references: [id], onDelete: SetNull)
+  specialties  DoctorSpecialty[]
+  schedules    DoctorSchedule[]
+  appointments Appointment[]
+  queues       Queue[]
+  reviews      Review[]
+
+  @@map("doctors")
+}
+
+model DoctorSpecialty {
+  doctorId    Int      @map("doctor_id")
+  specialtyId Int      @map("specialty_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at")
+
+  doctor    Doctor    @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  specialty Specialty @relation(fields: [specialtyId], references: [id], onDelete: Cascade)
+
+  @@id([doctorId, specialtyId])
+  @@index([specialtyId])
+  @@map("doctor_specialty")
+}
+
+model Schedule {
+  id        Int       @id @default(autoincrement())
+  startAt   DateTime  @map("start_at") @db.Time(0)
+  endAt     DateTime  @map("end_at") @db.Time(0)
+  label     String?   @db.VarChar(50) // "Ca 1"; null → client đánh số theo giờ
+  isActive  Boolean   @default(true) @map("is_active")
+  deletedAt DateTime? @map("deleted_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @default(now()) @updatedAt @map("updated_at")
+
+  doctorSchedules DoctorSchedule[]
+  appointments    Appointment[]
+
+  @@index([startAt])
+  @@index([endAt])
+  @@map("schedules")
+}
+
+model DoctorSchedule {
+  id          Int       @id @default(autoincrement())
+  doctorId    Int       @map("doctor_id")
+  scheduleId  Int       @map("schedule_id")
+  workingDate DateTime  @map("working_date") @db.Date
+  status      String    @default("pending") @db.VarChar(20) // pending | approved | rejected
+  roomNo      String?   @map("room_no") @db.VarChar(50)
+  deletedAt   DateTime? @map("deleted_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @default(now()) @updatedAt @map("updated_at")
+
+  doctor   Doctor   @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  schedule Schedule @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+
+  @@unique([doctorId, scheduleId, workingDate], map: "doc_sched_date_unique")
+  @@index([workingDate])
+  @@index([status])
+  @@index([scheduleId])
+  @@map("doctor_schedule")
+}
+
+model Appointment {
+  id              Int       @id @default(autoincrement())
+  userId          Int       @map("user_id")
+  doctorId        Int       @map("doctor_id")
+  scheduleId      Int       @map("schedule_id")
+  appointmentDate DateTime  @map("appointment_date") @db.Date
+  reason          String?   @db.Text
+  status          String    @default("pending") @db.VarChar(20) // pending | confirmed | completed | cancelled
+  type            String    @default("online") @db.VarChar(20) // online | offline
+  deletedAt       DateTime? @map("deleted_at")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @default(now()) @updatedAt @map("updated_at")
+
+  user           User                        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  doctor         Doctor                      @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  schedule       Schedule                    @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+  services       AppointmentMedicalService[]
+  queues         Queue[]
+  medicalRecords MedicalRecord[]
+  review         Review?
+
+  @@index([appointmentDate])
+  @@index([status])
+  @@index([type])
+  @@index([userId])
+  @@index([doctorId, scheduleId, appointmentDate])
+  @@map("appointments")
+}
+
+model AppointmentMedicalService {
+  appointmentId    Int      @map("appointment_id")
+  medicalServiceId Int      @map("medical_service_id")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @default(now()) @updatedAt @map("updated_at")
+
+  appointment    Appointment    @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  medicalService MedicalService @relation(fields: [medicalServiceId], references: [id], onDelete: Cascade)
+
+  @@id([appointmentId, medicalServiceId])
+  @@index([medicalServiceId])
+  @@map("appointment_medical_service")
+}
+
+model Queue {
+  id            Int       @id @default(autoincrement())
+  appointmentId Int       @map("appointment_id")
+  doctorId      Int       @map("doctor_id")
+  queueNumber   Int       @map("queue_number") @db.UnsignedInt
+  date          DateTime  @db.Date
+  status        String    @default("waiting") @db.VarChar(30) // waiting | examining | done | absent
+  priority      Int       @default(1) @db.UnsignedTinyInt
+  absentCount   Int       @default(0) @map("absent_count") @db.UnsignedTinyInt
+  startedAt     DateTime? @map("started_at")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @default(now()) @updatedAt @map("updated_at")
+
+  appointment Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  doctor      Doctor      @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+
+  @@index([date])
+  @@index([status])
+  @@index([doctorId, date])
+  @@index([appointmentId])
+  @@map("queues")
+}
+
+model MedicalRecord {
+  id            Int      @id @default(autoincrement())
+  appointmentId Int      @map("appointment_id")
+  diagnosis     String   @db.Text
+  prescription  String   @db.Text
+  notes         String?  @db.Text
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @default(now()) @updatedAt @map("updated_at")
+
+  appointment Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+
+  @@index([appointmentId])
+  @@map("medical_records")
+}
+
+model Review {
+  id            Int      @id @default(autoincrement())
+  userId        Int      @map("user_id")
+  doctorId      Int      @map("doctor_id")
+  appointmentId Int?     @unique @map("appointment_id")
+  rating        Int      @db.UnsignedTinyInt
+  comment       String?  @db.Text
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @default(now()) @updatedAt @map("updated_at")
+
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  doctor      Doctor       @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  appointment Appointment? @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([doctorId])
+  @@map("reviews")
+}
+
+model NationalMedicalRecord {
+  id                 Int       @id @default(autoincrement())
+  fullName           String    @map("full_name") @db.VarChar(100)
+  employeeCode       String    @unique @map("employee_code") @db.VarChar(50)
+  identityCard       String    @unique @map("identity_card") @db.VarChar(20)
+  title              String    @db.VarChar(100)
+  specialty          String    @db.VarChar(100)
+  practitionerNumber String    @unique @map("practitioner_number") @db.VarChar(50)
+  status             String    @default("active") @db.VarChar(20) // active | suspended | revoked
+  issueDate          DateTime  @map("issue_date") @db.Date
+  gender             String?   @db.VarChar(20) // DEVIATION: Laravel read gender/DOB from a PHP mock array, not from this table
+  dateOfBirth        DateTime? @map("date_of_birth") @db.Date // DEVIATION: see above
+  createdAt          DateTime  @default(now()) @map("created_at")
+  updatedAt          DateTime  @default(now()) @updatedAt @map("updated_at")
+  deletedAt          DateTime? @map("deleted_at")
+
+  @@index([specialty])
+  @@map("national_medical_records")
+}
