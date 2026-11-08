@@ -143,7 +143,7 @@ Khi quản trị bấm **"Xuất báo cáo tháng"**, worker sinh tệp CSV rồ
 
 ## Thành viên
 
-| Họ tên | MSSV | Vai trò sprint 1 |
+| Họ tên | MSSV | Vai trò |
 |---|---|---|
 | Lưu Long Hải | 21211TT0522 |  |
 | Ngô Đức Hải | 24211TT4856 |  |
