@@ -1,11 +1,11 @@
 {
-  "name": "e-clinic-workspace",
+  "name": "e-clinic",
   "private": true,
   "workspaces": [
     "apps/*"
   ],
   "engines": {
-    "node": ">=20.11"
+    "node": ">=22.0.0"
   },
   "scripts": {
     "infra:up": "docker compose up -d",
@@ -16,6 +16,7 @@
     "dev:web": "npm run dev -w @eclinic/web",
     "build": "npm run build --workspaces --if-present",
     "lint": "npm run lint --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
     "db:migrate": "npm run prisma:migrate -w @eclinic/api",
     "db:seed": "npm run prisma:seed -w @eclinic/api",
     "db:studio": "npm run prisma:studio -w @eclinic/api",

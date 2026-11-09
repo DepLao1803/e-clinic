@@ -22,6 +22,20 @@ services:
       timeout: 5s
       retries: 20
 
+  redis:
+    image: redis:7-alpine
+    container_name: eclinic-redis
+    restart: unless-stopped
+    ports:
+      - "${REDIS_HOST_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
   adminer:
     image: adminer:4
     container_name: eclinic-adminer
@@ -42,3 +56,4 @@ services:
 
 volumes:
   mysql_data:
+  redis_data:

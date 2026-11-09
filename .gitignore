@@ -1,6 +1,58 @@
-node_modules
-dist
-.next
-.env
+# Logs
+logs
 *.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
+
+# Diagnostic reports (https://nodejs.org/api/report.html)
+report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Dependency directories
+node_modules/
+jspm_packages/
+
+# TypeScript cache
+*.tsbuildinfo
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# Build outputs
+dist
+dist-ssr
+build
+.next
+out
+
+# OS / Editor
 .DS_Store
+.vscode/*
+!.vscode/extensions.json
+.idea
+
+# Uploaded files in dev
+uploads/*
+!uploads/.gitkeep
+apps/api/uploads/*
+!apps/api/uploads/.gitkeep
+
+# Môn Triển khai hệ thống phần mềm
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.sql.gz
+*.dump
