@@ -16,12 +16,16 @@ pids
 *.seed
 *.pid.lock
 
-# Dependency directories
+# Dependency directories & non-npm lockfiles
 node_modules/
 jspm_packages/
+pnpm-lock.yaml
+pnpm-workspace.yaml
+yarn.lock
 
-# TypeScript cache
+# TypeScript & Next.js cache
 *.tsbuildinfo
+next-env.d.ts
 
 # Optional npm cache directory
 .npm
@@ -29,15 +33,21 @@ jspm_packages/
 # Optional eslint cache
 .eslintcache
 
-# Build outputs
+# Testing & coverage
+coverage/
+
+# Build outputs & deployment
 dist
 dist-ssr
 build
 .next
 out
+.vercel
 
 # OS / Editor
 .DS_Store
+Thumbs.db
+Desktop.ini
 .vscode/*
 !.vscode/extensions.json
 .idea
